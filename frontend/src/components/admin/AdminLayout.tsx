@@ -26,6 +26,7 @@ import {
   FileUp,
   Cpu,
   MessageSquare,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ import { Badge } from "@/components/ui/badge";
 
 const NAV_ITEMS = [
   { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/admin/ads", label: "Ads", icon: Megaphone, badge: "New" },
   { path: "/admin/ai-models", label: "AI Models", icon: Cpu },
   { path: "/admin/ai-prompts", label: "AI Prompt Limits", icon: Sparkles },
   { path: "/admin/life-skills", label: "Life Skills", icon: MessageSquare },

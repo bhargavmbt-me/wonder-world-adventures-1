@@ -8,6 +8,7 @@ import AmbientSoundToggle from "@/components/AmbientSoundToggle";
 import QuizScreen, { QuizQuestion } from "@/components/QuizScreen";
 import RewardPopup from "@/components/RewardPopup";
 import VoiceInteraction from "@/components/VoiceInteraction";
+import AdSlot from "@/components/ads/AdSlot";
 import { contentApi, ApiLesson } from "@/lib/api";
 import storiesBg from "@/assets/stories-bg.jpg";
 import {
@@ -920,6 +921,9 @@ const LearnPage = () => {
               </div>
             </div>
 
+            {/* Lessons Top Promo Ad */}
+            <AdSlot slot="LESSONS_TOP" className="mb-4" />
+
             {lessons.length === 0 && (
               <div className="text-center text-white/70 py-12">More lessons coming soon for this level! 🌟</div>
             )}
@@ -979,6 +983,9 @@ const LearnPage = () => {
                 );
               })}
             </motion.div>
+
+            {/* Lessons Bottom Promo Ad */}
+            <AdSlot slot="LESSONS_BOTTOM" className="mt-6" />
           </motion.div>
         )}
 

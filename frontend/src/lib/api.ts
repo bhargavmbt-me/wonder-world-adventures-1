@@ -81,8 +81,15 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}, token?
     });
   }
   if (!response.ok || data?.success === false) {
-    const message = data?.message || "Request failed";
-    const error = new Error(message) as Error & { code?: string; isAuthError?: boolean };
+    let message = data?.message || "Request failed";
+    if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+      const detailed = data.errors.map((e: any) => e.field ? `${e.field}: ${e.message}` : e.message).join(", ");
+      if (detailed) message = detailed;
+    }
+    const error = new Error(message) as Error & { code?: string; isAuthError?: boolean; errors?: any[] };
+    if (data?.errors) {
+      error.errors = data.errors;
+    }
     if (data?.code) {
       error.code = data.code;
     }
