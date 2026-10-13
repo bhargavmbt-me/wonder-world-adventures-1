@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Settings, Crown, Edit2, Save, X, DollarSign, Calendar, ToggleLeft, ToggleRight } from "lucide-react";
+import { Settings, Crown, Edit2, Save, X, DollarSign, Calendar, ToggleLeft, ToggleRight, Megaphone } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { adminApi, SubscriptionPlan } from "@/lib/adminApi";
+import adsApi from "@/lib/ads/adsApi";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,6 +118,8 @@ const EditModal = ({ plan, onClose, onSave }: { plan: SubscriptionPlan; onClose:
 };
 
 export default function SettingsAdmin() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
   const [editPlan, setEditPlan] = useState<SubscriptionPlan | null>(null);
   const [featureFlags, setFeatureFlags] = useState({
     premiumStories: true,
@@ -123,6 +127,21 @@ export default function SettingsAdmin() {
     parentDashboard: true,
     multiChild: false,
     offlineMode: false,
+  });
+
+  const { data: globalAdsEnabled = true, isLoading: adsSwitchLoading } = useQuery({
+    queryKey: ["ads-global-switch"],
+    queryFn: () => adsApi.getGlobalSwitch(token!),
+    enabled: !!token,
+  });
+
+  const toggleAdsMutation = useMutation({
+    mutationFn: (enabled: boolean) => adsApi.setGlobalSwitch(enabled, token!),
+    onSuccess: (_, enabled) => {
+      toast.success(enabled ? "Advertisements enabled globally" : "Advertisements disabled globally");
+      queryClient.invalidateQueries({ queryKey: ["ads-global-switch"] });
+    },
+    onError: () => toast.error("Failed to update global advertisements setting"),
   });
 
   const { data: plans = [], isLoading } = useQuery({
@@ -197,6 +216,35 @@ export default function SettingsAdmin() {
                 </div>
               );
             })}
+          </div>
+        </motion.div>
+
+        {/* Advertisements Global Control */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+          style={{ background: "white", borderRadius: 20, border: "1px solid #e2e8f0", overflow: "hidden", marginBottom: 32 }}>
+          <div style={{ padding: "20px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, hsl(260,85%,60%), hsl(330,85%,65%))", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Megaphone size={18} color="white" />
+              </div>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "#0f172a" }}>Advertisements</h2>
+                <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0 0" }}>Control master in-app promotional advertisement delivery across all StoryNest screens</p>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: globalAdsEnabled ? "#10b981" : "#ef4444" }}>
+                {globalAdsEnabled ? "Enabled (Delivery Active)" : "Disabled (Master Kill Switch)"}
+              </span>
+              <Switch
+                checked={!!globalAdsEnabled}
+                onCheckedChange={v => toggleAdsMutation.mutate(v)}
+                disabled={adsSwitchLoading || toggleAdsMutation.isPending}
+              />
+            </div>
+          </div>
+          <div style={{ padding: "16px 24px", background: "#f8fafc", fontSize: 13, color: "#64748b" }}>
+            When toggled <strong>OFF</strong>, no in-app ads will be delivered anywhere in StoryNest, overriding all individual placement and schedule settings server-side.
           </div>
         </motion.div>
 

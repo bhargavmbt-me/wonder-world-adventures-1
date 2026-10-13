@@ -7,13 +7,15 @@ const errorMiddleware = (err, req, res, next) => {
 	let errors = undefined;
 
 	// Handle Zod validation errors
-	if (err.name === "ZodError" || (err.errors && Array.isArray(err.errors) && err.issues)) {
+	if (err.name === "ZodError" || (err.errors && Array.isArray(err.errors))) {
 		status = 400;
-		message = "Validation error";
-		errors = (err.errors || err.issues).map((issue) => ({
-			field: issue.path.join("."),
+		const issues = err.errors || err.issues || [];
+		errors = issues.map((issue) => ({
+			field: issue.path ? issue.path.join(".") : "",
 			message: issue.message,
 		}));
+		const first = errors[0];
+		message = first ? (first.field ? `${first.field}: ${first.message}` : first.message) : "Validation error";
 	}
 
 	// Handle Prisma errors

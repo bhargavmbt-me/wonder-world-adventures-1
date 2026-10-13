@@ -37,6 +37,7 @@ import ImportHistory from "./pages/admin/ImportHistory";
 import AiModelsAdmin from "./pages/admin/AiModelsAdmin";
 import AiPromptsAdmin from "./pages/admin/AiPromptsAdmin";
 import LifeSkillsAdmin from "./pages/admin/LifeSkillsAdmin";
+import AdsAdmin from "./pages/admin/AdsAdmin";
 import LifeSkillsPage from "./pages/LifeSkillsPage";
 import LifeSkillsChatPage from "./pages/LifeSkillsChatPage";
 import DictionaryPage from "./pages/DictionaryPage";
@@ -142,6 +143,7 @@ const AppRoutes = () => {
         <Route path="/admin/payments" element={<AdminRoute><PaymentsAdmin /></AdminRoute>} />
         <Route path="/admin/analytics" element={<AdminRoute><AnalyticsAdmin /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><SettingsAdmin /></AdminRoute>} />
+        <Route path="/admin/ads" element={<AdminRoute><AdsAdmin /></AdminRoute>} />
         <Route path="/admin/life-skills" element={<AdminRoute><LifeSkillsAdmin /></AdminRoute>} />
 
         {/* ── 404 ──────────────────────────────── */}

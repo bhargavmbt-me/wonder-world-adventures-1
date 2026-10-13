@@ -12,6 +12,7 @@ import StarBurst from "@/components/StarBurst";
 import PremiumBadge from "@/components/PremiumBadge";
 import { contentApi, ApiStory } from "@/lib/api";
 import SubscribeModal from "@/components/SubscribeModal";
+import AdSlot from "@/components/ads/AdSlot";
 import storiesBg from "@/assets/stories-bg.jpg";
 import { Star, Lock, BookMarked } from "lucide-react";
 import { StoryDetails } from "@/components/story/StoryDetails";
@@ -303,6 +304,11 @@ const StoriesPage = () => {
               <SourceSelector source={source} onSelect={handleSourceSelect} />
             </div>
 
+            {/* Stories Top Promo Banner */}
+            <div className="px-4 mb-4">
+              <AdSlot slot="STORIES_TOP" />
+            </div>
+
             {/* Story grid */}
             <div className="px-4 grid grid-cols-2 gap-4">
               {apiStories.map((story, i) => {
@@ -350,6 +356,11 @@ const StoriesPage = () => {
                   </motion.button>
                 );
               })}
+            </div>
+
+            {/* Stories Bottom Ad */}
+            <div className="px-4 mt-6">
+              <AdSlot slot="STORIES_BOTTOM" />
             </div>
           </motion.div>
         )}

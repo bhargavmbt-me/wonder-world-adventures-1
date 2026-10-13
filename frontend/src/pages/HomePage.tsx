@@ -6,6 +6,7 @@ import HomeMascot, { type HomeMascotHandle } from "@/components/common/HomeMasco
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
 import AmbientSoundToggle from "@/components/AmbientSoundToggle";
+import AdSlot from "@/components/ads/AdSlot";
 import homeBg from "@/assets/home-bg.jpg";
 import {
   Gamepad2,
@@ -137,6 +138,9 @@ const HomePage = () => {
       <AmbientSoundToggle />
 
       <div className="page-shell">
+        {/* Top Promotional Ad */}
+        <AdSlot slot="HOME_TOP" className="mb-6" />
+
         {/* Hero */}
         <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-6 sm:gap-8 mb-10 sm:mb-14">
           {/* Left – greeting glass card */}
@@ -372,6 +376,9 @@ const HomePage = () => {
           </motion.div>
         </div>
 
+        {/* After Hero In-App Ad */}
+        <AdSlot slot="HOME_AFTER_HERO" className="mb-8" />
+
         {/* Themed feature cards — horizontal snap on mobile, grid on desktop */}
         <motion.div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 sm:gap-5"
@@ -446,7 +453,13 @@ const HomePage = () => {
             </motion.button>
           ))}
         </motion.div>
+
+        {/* Bottom Promotional Ad */}
+        <AdSlot slot="HOME_BOTTOM" className="mt-8" />
       </div>
+
+      {/* Optional Child-Safe Promo Popup */}
+      <AdSlot slot="HOME_POPUP" />
     </div>
   );
 };

@@ -21,6 +21,7 @@ const adminRoutes = require("../modules/admin/admin.routes");
 const lifeSkillRoutes = require("../modules/life-skill/life-skill.routes");
 const dictionaryRoutes = require("../modules/dictionary/dictionary.routes");
 const storyweaverRoutes = require("../modules/storyweaver/routes/storyweaver.routes");
+const adsRoutes = require("../modules/ads/ads.routes");
 
 const { authRateLimiter, aiRateLimiter, audioRateLimiter } = require("../middleware/rateLimit.middleware");
 
@@ -54,5 +55,6 @@ router.use("/admin", adminRoutes);
 router.use("/life-skills", lifeSkillRoutes);
 router.use("/dictionary", dictionaryRoutes);
 router.use("/storyweaver/stories", storyweaverRoutes);
+router.use("/ads", adsRoutes);
 
 module.exports = router;

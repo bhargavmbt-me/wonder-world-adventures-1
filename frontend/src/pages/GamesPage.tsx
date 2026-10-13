@@ -10,6 +10,7 @@ import StarBurst from "@/components/StarBurst";
 import { contentApi, ApiGame } from "@/lib/api";
 import SubscribeModal from "@/components/SubscribeModal";
 import InstantGamesSection from "@/components/InstantGamesSection";
+import AdSlot from "@/components/ads/AdSlot";
 import gamesBg from "@/assets/games-bg.jpg";
 import {
   Gamepad2,
@@ -394,6 +395,9 @@ const GamesPage = () => {
       />
 
       <div className="page-shell max-w-5xl">
+        {/* Games Top Promo Banner */}
+        <AdSlot slot="GAMES_TOP" className="mb-6" />
+
         {/* Page header (only show when on module selector) */}
         {activeModule === null && (
           <motion.div
@@ -558,6 +562,9 @@ const GamesPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Games Bottom Promotional Ad */}
+        <AdSlot slot="GAMES_BOTTOM" className="mt-8" />
       </div>
     </div>
   );

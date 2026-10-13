@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import NavBar from "@/components/NavBar";
 import SceneBackground from "@/components/SceneBackground";
+import AdSlot from "@/components/ads/AdSlot";
 import { lifeSkillsApi, type LifeSkillScenario } from "@/lib/lifeSkillsApi";
 import { Sparkles, ArrowRight, MessageSquare } from "lucide-react";
 
@@ -158,6 +159,9 @@ export default function LifeSkillsPage() {
             Practice real conversations with Ollie's friends. 🌟
           </p>
         </motion.div>
+
+        {/* Life Skills Top Promo Banner */}
+        <AdSlot slot="LIFE_SKILLS_TOP" className="mb-8" />
 
         {/* Cards grid */}
         {isLoading ? (

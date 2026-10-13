@@ -26,6 +26,8 @@ model User {
   payments             Payment[]
   chatSessions         ChatSession[]
   chatSessionMessages  ChatSessionMessage[]
+  createdAds           Ad[]               @relation("AdCreatedBy")
+  updatedAds           Ad[]               @relation("AdUpdatedBy")
 
   @@map("users")
 }
@@ -581,6 +583,10 @@ model Media {
   uploadedBy   String?  @map("uploaded_by")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+  adMedia      Ad[]     @relation("AdMedia")
+  adMobileMedia Ad[]    @relation("AdMobileMedia")
+  adTabletMedia Ad[]    @relation("AdTabletMedia")
+  adDesktopMedia Ad[]   @relation("AdDesktopMedia")
 
   @@index([folder])
   @@index([mimeType])
@@ -757,3 +763,76 @@ model StoryWeaverAudio {
 }
 
 
+
+// -- Advertisement Management -----------------------------------------------
+
+model Ad {
+  id                     String    @id @default(cuid())
+  name                   String
+  title                  String
+  description            String?
+  format                 String
+  status                 String    @default("DRAFT")
+  slot                   String
+  deviceTarget           String    @default("ALL") @map("device_target")
+  mediaId                String?   @map("media_id")
+  mobileMediaId          String?   @map("mobile_media_id")
+  tabletMediaId          String?   @map("tablet_media_id")
+  desktopMediaId         String?   @map("desktop_media_id")
+  clickUrl               String?   @map("click_url")
+  internalRoute          String?   @map("internal_route")
+  ctaText                String?   @map("cta_text")
+  priority               Int       @default(5)
+  startAt                DateTime? @map("start_at")
+  endAt                  DateTime? @map("end_at")
+  frequencyLimit         Int?      @map("frequency_limit")
+  maxDisplaysPerDay      Int?      @map("max_displays_per_day")
+  minTimeBetweenDisplays Int?      @map("min_time_between_displays")
+  popupTrigger           String?   @map("popup_trigger")
+  popupDelay             Int?      @map("popup_delay")
+  isActive               Boolean   @default(true) @map("is_active")
+  impressionCount        Int       @default(0) @map("impression_count")
+  clickCount             Int       @default(0) @map("click_count")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  createdById            String?   @map("created_by_id")
+  updatedById            String?   @map("updated_by_id")
+  media                  Media?    @relation("AdMedia", fields: [mediaId], references: [id], onDelete: SetNull)
+  mobileMedia            Media?    @relation("AdMobileMedia", fields: [mobileMediaId], references: [id], onDelete: SetNull)
+  tabletMedia            Media?    @relation("AdTabletMedia", fields: [tabletMediaId], references: [id], onDelete: SetNull)
+  desktopMedia           Media?    @relation("AdDesktopMedia", fields: [desktopMediaId], references: [id], onDelete: SetNull)
+  createdBy              User?     @relation("AdCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy              User?     @relation("AdUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  events                 AdEvent[]
+
+  @@index([slot])
+  @@index([status])
+  @@index([isActive])
+  @@index([slot, status, isActive])
+  @@index([deviceTarget])
+  @@index([priority])
+  @@map("ads")
+}
+
+model AdEvent {
+  id        String   @id @default(cuid())
+  adId      String   @map("ad_id")
+  type      String
+  ipHash    String?  @map("ip_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@index([adId, type])
+  @@index([createdAt])
+  @@map("ad_events")
+}
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
