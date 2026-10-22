@@ -112,24 +112,50 @@ export const StoryWeaverReader = ({
   const isFirst     = pageIdx === 0;
   const isLast      = totalPages > 0 && pageIdx === totalPages - 1;
 
+  // Stop audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
   // Auto-play current page audio when audioPlaying is true and pageIdx changes
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (audioPlaying && currentPage?.audioUrl) {
-      audio.currentTime = 0;
-      audio
-        .play()
-        .then(() => setAudioError(false))
-        .catch(() => {
-          // Autoplay policy may require user gesture on first play
-          setAudioPlaying(false);
-        });
-    } else {
+    if (!audioPlaying) {
       audio.pause();
+      return;
     }
-  }, [pageIdx, audioPlaying, currentPage?.audioUrl]);
+
+    if (!currentPage?.audioUrl) {
+      // If this page has no audio URL, wait 3 seconds and advance
+      const timer = setTimeout(() => {
+        if (!isLast) {
+          setPageIdx((prev) => prev + 1);
+        } else {
+          setAudioPlaying(false);
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+
+    if (audio.src !== currentPage.audioUrl) {
+      audio.src = currentPage.audioUrl;
+    }
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => setAudioError(false))
+        .catch((err) => {
+          console.warn("[StoryWeaverReader] play() on page change rejected:", err.message);
+        });
+    }
+  }, [pageIdx, audioPlaying, currentPage?.audioUrl, isLast]);
 
   // Seek audio and update page
   const seekToPage = useCallback((newIdx: number) => {
@@ -179,6 +205,9 @@ export const StoryWeaverReader = ({
     if (generatingAudio) return;
 
     if (audioPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
       setAudioPlaying(false);
       return;
     }
@@ -203,6 +232,21 @@ export const StoryWeaverReader = ({
     }
 
     setAudioPlaying(true);
+    setAudioError(false);
+
+    // Direct user action: immediately play the audio on the element
+    if (audioRef.current) {
+      if (currentPage?.audioUrl && audioRef.current.src !== currentPage.audioUrl) {
+        audioRef.current.src = currentPage.audioUrl;
+      }
+      audioRef.current.currentTime = 0;
+      const p = audioRef.current.play();
+      if (p !== undefined) {
+        p.then(() => setAudioError(false)).catch((err) => {
+          console.warn("[StoryWeaverReader] Direct play error:", err.message);
+        });
+      }
+    }
   };
 
   // Touch swipe support
@@ -233,37 +277,31 @@ export const StoryWeaverReader = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Hidden Audio element for current page narration */}
-      {currentPage?.audioUrl && (
-        <audio
-          ref={audioRef}
-          key={`page-audio-${pageIdx}-${currentPage.audioUrl}`}
-          src={currentPage.audioUrl}
-          crossOrigin="anonymous"
-          preload="auto"
-          onEnded={() => {
-            if (!isLast) {
-              setPageIdx((prev) => prev + 1);
-            } else {
-              setAudioPlaying(false);
-              if (isReelsMode && onNextStory) onNextStory();
-            }
-          }}
-          onError={() => {
-            // On audio load error, skip to next page instead of stopping
-            // This handles CORS issues, missing R2 files, network errors
-            console.warn(`[StoryWeaverReader] Audio failed for page ${pageIdx}:`, currentPage.audioUrl);
-            if (audioPlaying && !isLast) {
-              // Auto-advance to next page after a brief delay
-              setTimeout(() => setPageIdx((prev) => prev + 1), 500);
-            } else {
-              setAudioError(true);
-              setAudioPlaying(false);
-            }
-          }}
-          style={{ display: "none" }}
-        />
-      )}
+      {/* Persistent Audio element for narration */}
+      <audio
+        ref={audioRef}
+        src={currentPage?.audioUrl || undefined}
+        preload="auto"
+        onEnded={() => {
+          if (!isLast) {
+            setPageIdx((prev) => prev + 1);
+          } else {
+            setAudioPlaying(false);
+            if (isReelsMode && onNextStory) onNextStory();
+          }
+        }}
+        onError={(e) => {
+          const audioEl = e.currentTarget as HTMLAudioElement;
+          console.warn(`[StoryWeaverReader] Audio error for page ${pageIdx}:`, currentPage?.audioUrl, audioEl.error?.message);
+          if (audioPlaying && !isLast) {
+            setTimeout(() => setPageIdx((prev) => prev + 1), 600);
+          } else {
+            setAudioError(true);
+            setAudioPlaying(false);
+          }
+        }}
+        style={{ display: "none" }}
+      />
 
       {/* Main modal container */}
       <motion.div
@@ -385,19 +423,34 @@ export const StoryWeaverReader = ({
           </span>
           <div className="flex items-center gap-2">
             {generatingAudio ? (
-              <span className="text-[10px] text-amber-300 font-semibold flex items-center gap-1">
+              <div className="text-[10px] text-amber-300 font-semibold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Generating AI voice...
-              </span>
+              </div>
             ) : audioPlaying ? (
-              <span className="text-[10px] text-orange-400 font-semibold flex items-center gap-1">
+              <button
+                type="button"
+                id="sw-reader-ai-narration-active"
+                onClick={toggleAudio}
+                className="text-[10px] text-orange-300 font-bold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 cursor-pointer transition active:scale-95 shadow-xs"
+                title="AI Narration is playing — click to pause"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-ping" />
-                Auto-reading page
-              </span>
+                <span>Reading Page {pageIdx + 1}</span>
+                <span className="text-white/60 text-[9px]">(Pause)</span>
+              </button>
             ) : hasAudio ? (
-              <span className="text-[10px] text-emerald-400/80 font-medium flex items-center gap-1">
-                🎙️ AI Narration
-              </span>
+              <button
+                type="button"
+                id="sw-reader-ai-narration-btn"
+                onClick={toggleAudio}
+                className="text-[10px] text-emerald-300 font-bold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 cursor-pointer transition active:scale-95 shadow-xs hover:border-emerald-400"
+                title="Click to play AI voice narration"
+              >
+                <span>🎙️</span>
+                <span>AI Narration</span>
+                <span className="bg-emerald-400/25 text-emerald-200 text-[9px] uppercase px-1 py-0.2 rounded font-black tracking-wide">Play</span>
+              </button>
             ) : null}
           </div>
         </div>

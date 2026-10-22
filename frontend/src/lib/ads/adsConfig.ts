@@ -1,4 +1,4 @@
-﻿// StoryNest Ads — Frontend Placement Config (mirrors backend ads.config.js)
+// StoryNest Ads — Frontend Placement Config (mirrors backend ads.config.js)
 // This is the frontend copy of the single source of truth.
 
 export const AD_FORMATS = {
@@ -9,7 +9,7 @@ export const AD_FORMATS = {
 
 export const DEVICE_TARGETS = { ALL: "ALL", MOBILE: "MOBILE", TABLET: "TABLET", DESKTOP: "DESKTOP" } as const;
 export const AD_STATUS = { DRAFT: "DRAFT", ACTIVE: "ACTIVE", SCHEDULED: "SCHEDULED", EXPIRED: "EXPIRED", DISABLED: "DISABLED" } as const;
-export const SCREENS = { HOME: "HOME", STORIES: "STORIES", STORY_READER: "STORY_READER", LESSONS: "LESSONS", LESSON_READER: "LESSON_READER", GAMES: "GAMES", LIFE_SKILLS: "LIFE_SKILLS", CHAT: "CHAT", PARENTS: "PARENTS", SUBSCRIPTION: "SUBSCRIPTION", PROFILE: "PROFILE" } as const;
+export const SCREENS = { HOME: "HOME", STORIES: "STORIES", STORY_READER: "STORY_READER", STORYWEAVER: "STORYWEAVER", LESSONS: "LESSONS", LESSON_READER: "LESSON_READER", GAMES: "GAMES", LIFE_SKILLS: "LIFE_SKILLS", CHAT: "CHAT", PARENTS: "PARENTS", SUBSCRIPTION: "SUBSCRIPTION", PROFILE: "PROFILE" } as const;
 export const POPUP_TRIGGERS = { ON_PAGE_LOAD: "ON_PAGE_LOAD", AFTER_DELAY: "AFTER_DELAY", AFTER_CONTENT: "AFTER_CONTENT", ON_EXIT_INTENT: "ON_EXIT_INTENT" } as const;
 export const CTA_OPTIONS = ["Learn More","Subscribe","Explore","Play Now","Read Now","Start Learning","Get Started","Try Free","Discover"];
 export const ALLOWED_IMAGE_TYPES = ["image/png","image/jpeg","image/jpg","image/webp"];
@@ -44,6 +44,9 @@ export const SLOT_SPECS: Record<string, SlotSpec> = {
   STORIES_TOP:{ slot:"STORIES_TOP", screen:"STORIES", label:"Stories — Top Banner", formats:["BANNER","VIDEO"], devices:["ALL"], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },
   STORIES_BETWEEN_CARDS:{ slot:"STORIES_BETWEEN_CARDS", screen:"STORIES", label:"Stories — Between Cards", formats:["CARD","INLINE_CONTENT","BANNER"], devices:["ALL"], dimensions:{desktop:{width:800,height:450},tablet:{width:700,height:394},mobile:{width:640,height:360}}, aspectRatio:"16:9", maxSizeKB:{desktop:600,tablet:500,mobile:400}, objectFit:"cover" },
   STORIES_BOTTOM:{ slot:"STORIES_BOTTOM", screen:"STORIES", label:"Stories — Bottom", formats:["BANNER","CARD"], devices:["ALL"], dimensions:{desktop:{width:1200,height:200},tablet:{width:1024,height:180},mobile:{width:720,height:160}}, aspectRatio:"6:1", maxSizeKB:{desktop:500,tablet:400,mobile:300}, objectFit:"cover" },
+  STORYWEAVER_TOP:{ slot:"STORYWEAVER_TOP", screen:"STORYWEAVER", label:"StoryWeaver — Top Banner", formats:["BANNER","VIDEO"], devices:["ALL"], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },
+  STORYWEAVER_BETWEEN_CARDS:{ slot:"STORYWEAVER_BETWEEN_CARDS", screen:"STORYWEAVER", label:"StoryWeaver — Between Story Cards", formats:["CARD","INLINE_CONTENT","BANNER"], devices:["ALL"], dimensions:{desktop:{width:800,height:450},tablet:{width:700,height:394},mobile:{width:640,height:360}}, aspectRatio:"16:9", maxSizeKB:{desktop:600,tablet:500,mobile:400}, objectFit:"cover" },
+  STORYWEAVER_BOTTOM:{ slot:"STORYWEAVER_BOTTOM", screen:"STORYWEAVER", label:"StoryWeaver — Bottom", formats:["BANNER","CARD"], devices:["ALL"], dimensions:{desktop:{width:1200,height:200},tablet:{width:1024,height:180},mobile:{width:720,height:160}}, aspectRatio:"6:1", maxSizeKB:{desktop:500,tablet:400,mobile:300}, objectFit:"cover" },
   STORY_READER_BETWEEN_PAGES:{ slot:"STORY_READER_BETWEEN_PAGES", screen:"STORY_READER", label:"Story Reader — Between Pages", formats:["FULLSCREEN","BANNER"], devices:["ALL"], dimensions:{desktop:{width:1024,height:600},tablet:{width:768,height:576},mobile:{width:390,height:844}}, aspectRatio:"9:16", maxSizeKB:{desktop:1200,tablet:1000,mobile:800}, objectFit:"cover", triggers:["AFTER_CONTENT"] },
   STORY_READER_AFTER_STORY:{ slot:"STORY_READER_AFTER_STORY", screen:"STORY_READER", label:"Story Reader — After Story", formats:["FULLSCREEN","CARD","POPUP"], devices:["ALL"], dimensions:{desktop:{width:800,height:600},tablet:{width:700,height:525},mobile:{width:390,height:844}}, aspectRatio:"9:16", maxSizeKB:{desktop:1200,tablet:1000,mobile:800}, objectFit:"contain", triggers:["AFTER_CONTENT"] },
   LESSONS_TOP:{ slot:"LESSONS_TOP", screen:"LESSONS", label:"Lessons — Top Banner", formats:["BANNER","VIDEO"], devices:["ALL"], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },

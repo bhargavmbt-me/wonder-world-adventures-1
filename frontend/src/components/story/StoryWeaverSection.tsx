@@ -13,7 +13,7 @@
  * - Opens StoryWeaverReader modal on "Play as Story" or "Start Reels Feed"
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Volume2, Image as ImageIcon, Sparkles, Play, Search,
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { storyweaverApi, StoryWeaverStory, StoryWeaverDbStats } from "@/lib/api";
 import { StoryWeaverReader } from "./StoryWeaverReader";
+import AdSlot from "@/components/ads/AdSlot";
 
 type FilterTab = "Audio" | "Images" | "GIF" | "All";
 
@@ -84,8 +85,8 @@ export const StoryWeaverSection = () => {
   const [activeReaderStory, setActiveReaderStory] = useState<StoryWeaverStory | null>(null);
   const [isReelsMode, setIsReelsMode]             = useState(false);
 
-  // Database storage states
-  const [sourceMode, setSourceMode]               = useState<"all" | "database">("all");
+  // Database storage states (default to verified database stories)
+  const [sourceMode, setSourceMode]               = useState<"all" | "database">("database");
   const [dbStats, setDbStats]                     = useState<StoryWeaverDbStats | null>(null);
   const [isSyncing, setIsSyncing]                 = useState(false);
   const [syncSuccessMsg, setSyncSuccessMsg]       = useState<string | null>(null);
@@ -690,79 +691,87 @@ export const StoryWeaverSection = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {filteredStories.map((story) => (
-            <div
-              key={story.id}
-              id={`sw-card-${story.id}`}
-              onClick={() => {
-                setSelectedStory(story);
-                setShowRawJson(false);
-              }}
-              className="group bg-white rounded-2xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col cursor-pointer"
-            >
-              {/* Cover Image + Overlaid Badges */}
-              <div className="relative aspect-square w-full overflow-hidden bg-stone-100">
-                {story.coverImage ? (
-                  <img
-                    src={story.coverImage}
-                    alt={story.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-6xl">
-                    📖
+          {filteredStories.map((story, index) => (
+            <Fragment key={story.id}>
+              <div
+                id={`sw-card-${story.id}`}
+                onClick={() => {
+                  setSelectedStory(story);
+                  setShowRawJson(false);
+                }}
+                className="group bg-white rounded-2xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col cursor-pointer"
+              >
+                {/* Cover Image + Overlaid Badges */}
+                <div className="relative aspect-square w-full overflow-hidden bg-stone-100">
+                  {story.coverImage ? (
+                    <img
+                      src={story.coverImage}
+                      alt={story.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-6xl">
+                      📖
+                    </div>
+                  )}
+
+                  {/* Overlaid Badges (Screenshot 1 & 3 style) */}
+                  <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
+                    {story.recommended && (
+                      <span className="bg-white/95 text-stone-900 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full border border-stone-200 shadow-sm">
+                        RECOMMENDED
+                      </span>
+                    )}
+                    {story.editorsPick && (
+                      <span className="bg-[#d9531e] text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+                        EDITOR'S PICK
+                      </span>
+                    )}
+                    {(story.isSavedInDb || sourceMode === "database" || story.source === "database") && (
+                      <span className="bg-emerald-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                        💾 IN DB
+                      </span>
+                    )}
+                    {story.isAudio && (
+                      <span className="bg-[#2a7a5f] text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                        <Volume2 className="w-3 h-3" /> AUDIO
+                      </span>
+                    )}
+                    {story.isGif && (
+                      <span className="bg-stone-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+                        GIF
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {/* Overlaid Badges (Screenshot 1 & 3 style) */}
-                <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
-                  {story.recommended && (
-                    <span className="bg-white/95 text-stone-900 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full border border-stone-200 shadow-sm">
-                      RECOMMENDED
+                {/* Card Footer: Title & Metadata Tags */}
+                <div className="p-3.5 flex flex-col gap-2">
+                  <h3 className="font-bold text-stone-900 text-sm sm:text-base leading-snug line-clamp-1 group-hover:text-[#d9531e] transition-colors">
+                    {story.title}
+                  </h3>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="bg-stone-100 text-stone-600 text-[11px] font-medium px-2 py-0.5 rounded">
+                      {story.language || "English"}
                     </span>
-                  )}
-                  {story.editorsPick && (
-                    <span className="bg-[#d9531e] text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-                      EDITOR'S PICK
+                    <span className="bg-stone-100 text-stone-600 text-[11px] font-medium px-2 py-0.5 rounded">
+                      Level {story.level || "1"}
                     </span>
-                  )}
-                  {(story.isSavedInDb || sourceMode === "database" || story.source === "database") && (
-                    <span className="bg-emerald-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                      💾 IN DB
+                    <span className="bg-stone-100 text-stone-600 text-[11px] font-medium px-2 py-0.5 rounded">
+                      #{story.id}
                     </span>
-                  )}
-                  {story.isAudio && (
-                    <span className="bg-[#2a7a5f] text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                      <Volume2 className="w-3 h-3" /> AUDIO
-                    </span>
-                  )}
-                  {story.isGif && (
-                    <span className="bg-stone-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-                      GIF
-                    </span>
-                  )}
+                  </div>
                 </div>
               </div>
 
-              {/* Card Footer: Title & Metadata Tags */}
-              <div className="p-3.5 flex flex-col gap-2">
-                <h3 className="font-bold text-stone-900 text-sm sm:text-base leading-snug line-clamp-1 group-hover:text-[#d9531e] transition-colors">
-                  {story.title}
-                </h3>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="bg-stone-100 text-stone-600 text-[11px] font-medium px-2 py-0.5 rounded">
-                    {story.language || "English"}
-                  </span>
-                  <span className="bg-stone-100 text-stone-600 text-[11px] font-medium px-2 py-0.5 rounded">
-                    Level {story.level || "1"}
-                  </span>
-                  <span className="bg-stone-100 text-stone-600 text-[11px] font-medium px-2 py-0.5 rounded">
-                    #{story.id}
-                  </span>
+              {/* Between-cards advertisement slot */}
+              {index === 3 && (
+                <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 my-2">
+                  <AdSlot slot="STORYWEAVER_BETWEEN_CARDS" fallbackSlot="STORIES_BETWEEN_CARDS" />
                 </div>
-              </div>
-            </div>
+              )}
+            </Fragment>
           ))}
         </div>
       )}

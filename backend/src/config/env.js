@@ -74,7 +74,7 @@ module.exports = {
 	r2AccessKeyId:     getEnv("R2_ACCESS_KEY_ID", ""),
 	r2SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", ""),
 	r2BucketName:      getEnv("R2_BUCKET_NAME", "flucieaudio"),
-	r2PublicUrl:       getEnv("R2_PUBLIC_URL", ""),
+	r2PublicUrl:       getEnv("R2_PUBLIC_URL", "").trim(),
 };
 
 
