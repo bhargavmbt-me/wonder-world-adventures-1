@@ -88,7 +88,7 @@ const uploadAudio = async (buffer, key) => {
 		CacheControl: "public, max-age=31536000, immutable",
 	}));
 
-	const publicUrl = `${r2PublicUrl.replace(/\/$/, "")}/${key}`;
+	const publicUrl = `${(r2PublicUrl || "").trim().replace(/\/+$/, "")}/${key}`;
 	logger.info("[r2] Upload complete", { key, publicUrl });
 
 	return publicUrl;

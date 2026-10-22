@@ -245,7 +245,17 @@ const StoriesPage = () => {
 
         {/* Pure StoryWeaver Section */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Stories Top Ad */}
+          <div className="mb-4">
+            <AdSlot slot="STORYWEAVER_TOP" fallbackSlot="STORIES_TOP" />
+          </div>
+
           <StoryWeaverSection />
+
+          {/* Stories Bottom Ad */}
+          <div className="mt-6">
+            <AdSlot slot="STORYWEAVER_BOTTOM" fallbackSlot="STORIES_BOTTOM" />
+          </div>
         </main>
       </div>
     );

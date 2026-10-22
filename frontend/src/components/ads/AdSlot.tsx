@@ -23,6 +23,7 @@ import { SLOT_SPECS } from "@/lib/ads/adsConfig";
 
 interface AdSlotProps {
   slot: string;
+  fallbackSlot?: string;
   device?: "MOBILE" | "TABLET" | "DESKTOP" | "ALL";
   className?: string;
   style?: React.CSSProperties;
@@ -66,9 +67,9 @@ const setLastDisplayTime = (adId: string): void => {
 };
 
 // ── AdSlot component ─────────────────────────────────────────────────────────
-export default function AdSlot({ slot, device, className, style }: AdSlotProps) {
+export default function AdSlot({ slot, fallbackSlot, device, className, style }: AdSlotProps) {
   const detectedDevice = device || detectDevice();
-  const spec = SLOT_SPECS[slot];
+  const spec = SLOT_SPECS[slot] || (fallbackSlot ? SLOT_SPECS[fallbackSlot] : null);
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -77,8 +78,14 @@ export default function AdSlot({ slot, device, className, style }: AdSlotProps) 
   const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: ad, isLoading, error } = useQuery<PublicAd | null>({
-    queryKey: ["ad-slot", slot, detectedDevice],
-    queryFn: () => adsApi.getSlotAd(slot, detectedDevice),
+    queryKey: ["ad-slot", slot, fallbackSlot, detectedDevice],
+    queryFn: async () => {
+      let result = await adsApi.getSlotAd(slot, detectedDevice);
+      if (!result && fallbackSlot) {
+        result = await adsApi.getSlotAd(fallbackSlot, detectedDevice);
+      }
+      return result;
+    },
     staleTime: 2 * 60 * 1000, // 2 min — matches backend cache TTL
     gcTime: 5 * 60 * 1000,
     retry: 1,
@@ -208,9 +215,13 @@ export default function AdSlot({ slot, device, className, style }: AdSlotProps) 
     return (
       <img
         src={ad.mediaUrl}
-        alt={ad.title}
+        alt={ad.title || "Ad"}
         style={baseStyle}
         loading="lazy"
+        onError={(e) => {
+          // If media fails to load, hide image and allow gradient fallback to show
+          (e.currentTarget as HTMLElement).style.display = "none";
+        }}
       />
     );
   };
@@ -296,6 +307,7 @@ export default function AdSlot({ slot, device, className, style }: AdSlotProps) 
           overflow: "hidden",
           cursor: ad.clickUrl || ad.internalRoute ? "pointer" : "default",
           margin: "12px auto",
+          background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
           ...style,
         }}
@@ -305,13 +317,13 @@ export default function AdSlot({ slot, device, className, style }: AdSlotProps) 
         {(ad.title || ad.ctaText) && (
           <div style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
-            background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent)",
+            background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)",
             padding: "24px 16px 14px",
             display: "flex", alignItems: "flex-end", justifyContent: "space-between",
           }}>
             <div>
-              {ad.title && <div style={{ fontSize: 15, fontWeight: 700, color: "white", marginBottom: 4 }}>{ad.title}</div>}
-              {ad.description && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{ad.description}</div>}
+              {ad.title && <div style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 4 }}>{ad.title}</div>}
+              {ad.description && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{ad.description}</div>}
             </div>
             <CTAButton />
           </div>

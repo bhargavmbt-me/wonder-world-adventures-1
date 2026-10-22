@@ -1,10 +1,11 @@
-﻿/**
+/**
  * StoryNest Ads — Centralized Placement Configuration
  * Single source of truth for all ad slots, formats, devices, and dimension specs.
  */
 
 const SCREENS = {
   HOME: "HOME", STORIES: "STORIES", STORY_READER: "STORY_READER",
+  STORYWEAVER: "STORYWEAVER",
   LESSONS: "LESSONS", LESSON_READER: "LESSON_READER", GAMES: "GAMES",
   LIFE_SKILLS: "LIFE_SKILLS", CHAT: "CHAT", PARENTS: "PARENTS",
   SUBSCRIPTION: "SUBSCRIPTION", PROFILE: "PROFILE",
@@ -33,6 +34,9 @@ const SLOT_SPECS = {
   STORIES_TOP:{ slot:"STORIES_TOP", screen:SCREENS.STORIES, label:"Stories — Top Banner", formats:[AD_FORMATS.BANNER,AD_FORMATS.VIDEO], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },
   STORIES_BETWEEN_CARDS:{ slot:"STORIES_BETWEEN_CARDS", screen:SCREENS.STORIES, label:"Stories — Between Cards", formats:[AD_FORMATS.CARD,AD_FORMATS.INLINE_CONTENT,AD_FORMATS.BANNER], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:800,height:450},tablet:{width:700,height:394},mobile:{width:640,height:360}}, aspectRatio:"16:9", maxSizeKB:{desktop:600,tablet:500,mobile:400}, objectFit:"cover" },
   STORIES_BOTTOM:{ slot:"STORIES_BOTTOM", screen:SCREENS.STORIES, label:"Stories — Bottom", formats:[AD_FORMATS.BANNER,AD_FORMATS.CARD], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:200},tablet:{width:1024,height:180},mobile:{width:720,height:160}}, aspectRatio:"6:1", maxSizeKB:{desktop:500,tablet:400,mobile:300}, objectFit:"cover" },
+  STORYWEAVER_TOP:{ slot:"STORYWEAVER_TOP", screen:SCREENS.STORYWEAVER, label:"StoryWeaver — Top Banner", formats:[AD_FORMATS.BANNER,AD_FORMATS.VIDEO], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },
+  STORYWEAVER_BETWEEN_CARDS:{ slot:"STORYWEAVER_BETWEEN_CARDS", screen:SCREENS.STORYWEAVER, label:"StoryWeaver — Between Story Cards", formats:[AD_FORMATS.CARD,AD_FORMATS.INLINE_CONTENT,AD_FORMATS.BANNER], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:800,height:450},tablet:{width:700,height:394},mobile:{width:640,height:360}}, aspectRatio:"16:9", maxSizeKB:{desktop:600,tablet:500,mobile:400}, objectFit:"cover" },
+  STORYWEAVER_BOTTOM:{ slot:"STORYWEAVER_BOTTOM", screen:SCREENS.STORYWEAVER, label:"StoryWeaver — Bottom", formats:[AD_FORMATS.BANNER,AD_FORMATS.CARD], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:200},tablet:{width:1024,height:180},mobile:{width:720,height:160}}, aspectRatio:"6:1", maxSizeKB:{desktop:500,tablet:400,mobile:300}, objectFit:"cover" },
   STORY_READER_BETWEEN_PAGES:{ slot:"STORY_READER_BETWEEN_PAGES", screen:SCREENS.STORY_READER, label:"Story Reader — Between Pages", formats:[AD_FORMATS.FULLSCREEN,AD_FORMATS.BANNER], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1024,height:600},tablet:{width:768,height:576},mobile:{width:390,height:844}}, aspectRatio:"9:16", maxSizeKB:{desktop:1200,tablet:1000,mobile:800}, objectFit:"cover", triggers:["AFTER_CONTENT"] },
   STORY_READER_AFTER_STORY:{ slot:"STORY_READER_AFTER_STORY", screen:SCREENS.STORY_READER, label:"Story Reader — After Story", formats:[AD_FORMATS.FULLSCREEN,AD_FORMATS.CARD,AD_FORMATS.POPUP], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:800,height:600},tablet:{width:700,height:525},mobile:{width:390,height:844}}, aspectRatio:"9:16", maxSizeKB:{desktop:1200,tablet:1000,mobile:800}, objectFit:"contain", triggers:["AFTER_CONTENT"] },
   LESSONS_TOP:{ slot:"LESSONS_TOP", screen:SCREENS.LESSONS, label:"Lessons — Top Banner", formats:[AD_FORMATS.BANNER,AD_FORMATS.VIDEO], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },
@@ -47,7 +51,6 @@ const SLOT_SPECS = {
   LIFE_SKILLS_BETWEEN:{ slot:"LIFE_SKILLS_BETWEEN", screen:SCREENS.LIFE_SKILLS, label:"Life Skills — Between Cards", formats:[AD_FORMATS.CARD,AD_FORMATS.INLINE_CONTENT], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:800,height:450},tablet:{width:700,height:394},mobile:{width:640,height:360}}, aspectRatio:"16:9", maxSizeKB:{desktop:600,tablet:500,mobile:400}, objectFit:"cover" },
   PARENTS_TOP:{ slot:"PARENTS_TOP", screen:SCREENS.PARENTS, label:"Parents — Top Banner", formats:[AD_FORMATS.BANNER,AD_FORMATS.CARD], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:250},tablet:{width:1024,height:220},mobile:{width:720,height:200}}, aspectRatio:"5:1", maxSizeKB:{desktop:700,tablet:550,mobile:400}, objectFit:"cover" },
   SUBSCRIPTION_TOP:{ slot:"SUBSCRIPTION_TOP", screen:SCREENS.SUBSCRIPTION, label:"Subscription — Top Promo Banner", formats:[AD_FORMATS.BANNER,AD_FORMATS.CARD], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:300},tablet:{width:1024,height:260},mobile:{width:720,height:240}}, aspectRatio:"4:1", maxSizeKB:{desktop:800,tablet:600,mobile:400}, objectFit:"cover" },
-  CHAT_TOP:{ slot:"CHAT_TOP", screen:SCREENS.CHAT, label:"Chat — Top Banner", formats:[AD_FORMATS.BANNER], devices:[DEVICE_TARGETS.ALL], dimensions:{desktop:{width:1200,height:200},tablet:{width:1024,height:180},mobile:{width:720,height:160}}, aspectRatio:"6:1", maxSizeKB:{desktop:500,tablet:400,mobile:300}, objectFit:"cover" },
 };
 
 const getAllSlotKeys = () => Object.keys(SLOT_SPECS);

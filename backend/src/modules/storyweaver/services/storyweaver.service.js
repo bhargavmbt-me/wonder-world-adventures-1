@@ -839,7 +839,7 @@ const ensurePageAudios = async (storyOrId) => {
 				}
 
 				if (exists && r2PublicUrl) {
-					page.audioUrl = `${r2PublicUrl.replace(/\/$/, "")}/${audioKey}`;
+					page.audioUrl = `${(r2PublicUrl || "").trim().replace(/\/+$/, "")}/${audioKey}`;
 					updatedPages[i] = page;
 					modified = true;
 					continue;
