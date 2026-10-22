@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { X, ExternalLink } from "lucide-react";
 import adsApi, { PublicAd } from "@/lib/ads/adsApi";
@@ -66,8 +67,88 @@ const setLastDisplayTime = (adId: string): void => {
   } catch {}
 };
 
+// ── Destination resolution (SPA internal route vs External URL) ─────────────
+export function extractInternalPath(raw: string): string {
+  if (!raw || !raw.trim()) return "/";
+  let str = raw.trim();
+
+  // If a full URL was entered for an internal route (e.g. https://www.flucie.com/chat)
+  if (str.startsWith("http://") || str.startsWith("https://") || str.startsWith("//")) {
+    try {
+      const parsed = new URL(str.startsWith("//") ? `https:${str}` : str);
+      str = (parsed.pathname || "/") + parsed.search + parsed.hash;
+    } catch {}
+  }
+
+  // Remove duplicate leading slashes e.g. //chat -> /chat
+  str = str.replace(/^\/+/, "/");
+
+  // Ensure it starts with /
+  if (!str.startsWith("/")) {
+    str = `/${str}`;
+  }
+
+  return str || "/";
+}
+
+export function resolveAdTarget(ad: { clickUrl?: string | null; internalRoute?: string | null }): {
+  isExternal: boolean;
+  target: string;
+} | null {
+  const rawInternal = ad.internalRoute?.trim();
+  const rawClick = ad.clickUrl?.trim();
+
+  // 1. Explicit internal route
+  if (rawInternal) {
+    return {
+      isExternal: false,
+      target: extractInternalPath(rawInternal),
+    };
+  }
+
+  // 2. Click URL
+  if (rawClick) {
+    // Relative path (e.g. "/chat" or "chat")
+    if (rawClick.startsWith("/") && !rawClick.startsWith("//")) {
+      return { isExternal: false, target: rawClick };
+    }
+
+    try {
+      const parsed = new URL(rawClick.startsWith("//") ? `${window.location.protocol}${rawClick}` : rawClick);
+      const isSameOrigin = parsed.origin === window.location.origin;
+      const isKnownSite =
+        parsed.hostname === window.location.hostname ||
+        parsed.hostname.includes("flucie.com") ||
+        parsed.hostname.includes("storynest") ||
+        parsed.hostname === "localhost" ||
+        parsed.hostname === "127.0.0.1";
+
+      if (isSameOrigin || isKnownSite) {
+        const path = (parsed.pathname || "/") + parsed.search + parsed.hash;
+        return {
+          isExternal: false,
+          target: path.startsWith("/") ? path : `/${path}`,
+        };
+      }
+
+      return { isExternal: true, target: parsed.href };
+    } catch {
+      if (!rawClick.includes("://") && !rawClick.includes(".")) {
+        return { isExternal: false, target: extractInternalPath(rawClick) };
+      }
+      return {
+        isExternal: true,
+        target: rawClick.startsWith("http://") || rawClick.startsWith("https://") ? rawClick : `https://${rawClick}`,
+      };
+    }
+  }
+
+  return null;
+}
+
 // ── AdSlot component ─────────────────────────────────────────────────────────
 export default function AdSlot({ slot, fallbackSlot, device, className, style }: AdSlotProps) {
+  const navigate = useNavigate();
   const detectedDevice = device || detectDevice();
   const spec = SLOT_SPECS[slot] || (fallbackSlot ? SLOT_SPECS[fallbackSlot] : null);
   const [visible, setVisible] = useState(false);
@@ -165,15 +246,22 @@ export default function AdSlot({ slot, fallbackSlot, device, className, style }:
   const handleClick = useCallback(() => {
     if (!ad) return;
     adsApi.trackClick(ad.id);
-    const url = ad.clickUrl || (ad.internalRoute ? `/${ad.internalRoute}` : null);
-    if (url) {
-      if (ad.clickUrl) {
-        window.open(url, "_blank", "noopener,noreferrer");
-      } else {
-        window.location.href = url;
+    const dest = resolveAdTarget(ad);
+    if (!dest) return;
+
+    // Dismiss popup or overlay if currently open
+    setPopupVisible(false);
+
+    if (dest.isExternal) {
+      window.open(dest.target, "_blank", "noopener,noreferrer");
+    } else {
+      try {
+        navigate(dest.target);
+      } catch {
+        window.location.href = dest.target;
       }
     }
-  }, [ad]);
+  }, [ad, navigate]);
 
   const handleDismiss = useCallback(() => {
     setDismissed(true);
@@ -501,6 +589,7 @@ export default function AdSlot({ slot, fallbackSlot, device, className, style }:
       <div
         ref={adRef}
         className={className}
+        onClick={ad.clickUrl || ad.internalRoute ? handleClick : undefined}
         style={{
           position: "relative",
           width: "100%",
@@ -508,6 +597,7 @@ export default function AdSlot({ slot, fallbackSlot, device, className, style }:
           borderRadius: 16,
           overflow: "hidden",
           margin: "12px auto",
+          cursor: ad.clickUrl || ad.internalRoute ? "pointer" : "default",
           ...style,
         }}
       >

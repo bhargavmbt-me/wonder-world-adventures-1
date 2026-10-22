@@ -186,6 +186,50 @@ export default function AdsCreateModal({ editAd, onClose, onSuccess }: AdsCreate
         if (!isNaN(d.getTime())) safeEndAt = d.toISOString();
       }
 
+      let cleanInternalRoute: string | null = null;
+      let cleanClickUrl: string | null = null;
+
+      if (destinationType === "internal") {
+        if (internalRoute.trim()) {
+          let val = internalRoute.trim();
+          if (val.startsWith("http://") || val.startsWith("https://") || val.startsWith("//")) {
+            try {
+              const u = new URL(val.startsWith("//") ? `https:${val}` : val);
+              val = (u.pathname || "/") + u.search + u.hash;
+            } catch {}
+          }
+          val = val.replace(/^\/+/, "/");
+          if (!val.startsWith("/")) val = `/${val}`;
+          cleanInternalRoute = val;
+        }
+      } else {
+        if (clickUrl.trim()) {
+          const raw = clickUrl.trim();
+          if (raw.startsWith("/") && !raw.startsWith("//")) {
+            cleanInternalRoute = raw;
+          } else {
+            try {
+              const parsed = new URL(raw.startsWith("//") ? `https:${raw}` : raw);
+              const isSameOrigin = parsed.origin === window.location.origin;
+              const isKnownSite =
+                parsed.hostname === window.location.hostname ||
+                parsed.hostname.includes("flucie.com") ||
+                parsed.hostname.includes("storynest") ||
+                parsed.hostname === "localhost" ||
+                parsed.hostname === "127.0.0.1";
+              if (isSameOrigin || isKnownSite) {
+                const path = (parsed.pathname || "/") + parsed.search + parsed.hash;
+                cleanInternalRoute = path.startsWith("/") ? path : `/${path}`;
+              } else {
+                cleanClickUrl = raw;
+              }
+            } catch {
+              cleanClickUrl = raw;
+            }
+          }
+        }
+      }
+
       const payload: Partial<Ad> = {
         name: name.trim(),
         title: title.trim(),
@@ -200,8 +244,8 @@ export default function AdsCreateModal({ editAd, onClose, onSuccess }: AdsCreate
         mobileMediaId: showResponsiveMedia && mobileMediaId ? mobileMediaId : null,
         tabletMediaId: showResponsiveMedia && tabletMediaId ? tabletMediaId : null,
         desktopMediaId: showResponsiveMedia && desktopMediaId ? desktopMediaId : null,
-        clickUrl: destinationType === "external" && clickUrl.trim() ? clickUrl.trim() : null,
-        internalRoute: destinationType === "internal" && internalRoute.trim() ? internalRoute.trim() : null,
+        clickUrl: cleanClickUrl,
+        internalRoute: cleanInternalRoute,
         ctaText: ctaText.trim() || null,
         startAt: safeStartAt,
         endAt: safeEndAt,
@@ -908,10 +952,13 @@ export default function AdsCreateModal({ editAd, onClose, onSuccess }: AdsCreate
                         <Input
                           value={internalRoute}
                           onChange={e => setInternalRoute(e.target.value)}
-                          placeholder="e.g. /stories, /lessons, /games, /parents, /subscription"
+                          placeholder="e.g. /chat, /stories, /learn, or site URL like https://www.flucie.com/chat"
                         />
+                        <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", marginTop: 4, display: "block" }}>
+                          Smoothly redirects inside StoryNest without a page reload. Full website links are automatically converted.
+                        </span>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                          {["/stories", "/lessons", "/games", "/life-skills", "/subscription", "/parents"].map(r => (
+                          {["/chat", "/stories", "/learn", "/games", "/life-skills", "/dictionary", "/parents", "/subscription"].map(r => (
                             <button
                               key={r}
                               type="button"
