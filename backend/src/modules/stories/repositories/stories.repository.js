@@ -109,7 +109,7 @@ const list = async ({
 		prisma.story.findMany({
 			where,
 			select: selectListStory,
-			orderBy: [{ [orderField]: orderDir }],
+			orderBy: [{ readAloudEnabled: "desc" }, { [orderField]: orderDir }],
 			take: pagination.limit,
 			skip: pagination.skip,
 		}),

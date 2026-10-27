@@ -190,18 +190,22 @@ export const StoryWeaverSection = () => {
     fetchStories(pg, sz, searchInput, languageInput, categoryInput, sourceMode);
   };
 
-  // Filter stories client-side based on activeTab
+  // Filter stories client-side based on activeTab, prioritizing generated audios at the top
   const filteredStories = useMemo(() => {
+    let pool = stories;
     if (activeTab === "Audio") {
-      return stories.filter((s) => s.isAudio);
+      pool = stories.filter((s) => s.isAudio || s.hasAudio);
+    } else if (activeTab === "GIF") {
+      pool = stories.filter((s) => s.isGif);
+    } else if (activeTab === "Images") {
+      pool = stories.filter((s) => Boolean(s.coverImage));
     }
-    if (activeTab === "GIF") {
-      return stories.filter((s) => s.isGif);
-    }
-    if (activeTab === "Images") {
-      return stories.filter((s) => Boolean(s.coverImage));
-    }
-    return stories;
+    // Stories with generated audios always float to the top
+    return [...pool].sort((a, b) => {
+      const aAudio = a.hasAudio ? 1 : 0;
+      const bAudio = b.hasAudio ? 1 : 0;
+      return bAudio - aAudio;
+    });
   }, [stories, activeTab]);
 
   // Start reels feed
@@ -733,11 +737,15 @@ export const StoryWeaverSection = () => {
                         💾 IN DB
                       </span>
                     )}
-                    {story.isAudio && (
+                    {story.hasAudio ? (
+                      <span className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                        <Volume2 className="w-3 h-3" /> AUDIO READY
+                      </span>
+                    ) : story.isAudio ? (
                       <span className="bg-[#2a7a5f] text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
                         <Volume2 className="w-3 h-3" /> AUDIO
                       </span>
-                    )}
+                    ) : null}
                     {story.isGif && (
                       <span className="bg-stone-600 text-white text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm">
                         GIF

@@ -18,9 +18,22 @@ const baseAdSchema = z.object({
   clickUrl: z.string().max(500).optional().nullable().transform(v => {
     if (!v || !v.trim()) return null;
     const trimmed = v.trim();
+    if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
     return trimmed.startsWith("http://") || trimmed.startsWith("https://") ? trimmed : `https://${trimmed}`;
   }),
-  internalRoute: z.string().max(200).optional().nullable().transform(v => (v && v.trim() ? v.trim() : null)),
+  internalRoute: z.string().max(200).optional().nullable().transform(v => {
+    if (!v || !v.trim()) return null;
+    let trimmed = v.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("//")) {
+      try {
+        const u = new URL(trimmed.startsWith("//") ? `https:${trimmed}` : trimmed);
+        trimmed = (u.pathname || "/") + u.search + u.hash;
+      } catch {}
+    }
+    trimmed = trimmed.replace(/^\/+/, "/");
+    if (!trimmed.startsWith("/")) trimmed = `/${trimmed}`;
+    return trimmed;
+  }),
   ctaText: z.string().max(50).optional().nullable().transform(v => (v && v.trim() ? v.trim() : null)),
   priority: z.preprocess(v => {
     if (v === "" || v === null || v === undefined) return 5;
@@ -63,8 +76,11 @@ const baseAdSchema = z.object({
 
 // Normalize mutually exclusive destinations automatically
 const normalizeDestination = (data) => {
-  if (data.clickUrl) {
-    data.internalRoute = null;
+  if (data.internalRoute) {
+    data.clickUrl = null;
+  } else if (data.clickUrl && data.clickUrl.startsWith("/") && !data.clickUrl.startsWith("//")) {
+    data.internalRoute = data.clickUrl;
+    data.clickUrl = null;
   }
   return data;
 };

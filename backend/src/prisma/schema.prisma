@@ -746,6 +746,7 @@ model StoryWeaverAudio {
   readsCount     Int       @default(0) @map("reads_count")
   likesCount     Int       @default(0) @map("likes_count")
   isAudio        Boolean   @default(true) @map("is_audio")
+  hasAudio       Boolean   @default(false) @map("has_audio")
   pageTimestamps Json?     @map("page_timestamps")
   pages          Json?
   totalPages     Int       @default(0) @map("total_pages")
@@ -758,6 +759,7 @@ model StoryWeaverAudio {
   @@index([language])
   @@index([level])
   @@index([isAudio])
+  @@index([hasAudio])
   @@index([language, level])
   @@map("storyweaver_audios")
 }

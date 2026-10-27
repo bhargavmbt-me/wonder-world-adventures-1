@@ -120,9 +120,11 @@ const AppRoutes = () => {
         <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/parents" element={<ProtectedRoute><ParentsPage /></ProtectedRoute>} />
         <Route path="/learn" element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
+        <Route path="/lessons" element={<Navigate to="/learn" replace />} />
         <Route path="/life-skills" element={<ProtectedRoute><LifeSkillsPage /></ProtectedRoute>} />
         <Route path="/life-skills/:slug/practice" element={<ProtectedRoute><LifeSkillsChatPage /></ProtectedRoute>} />
         <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
+        <Route path="/subscription" element={<Navigate to="/parents" replace />} />
 
         {/* ── Admin ─────────────────────────────── */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

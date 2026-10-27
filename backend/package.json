@@ -27,7 +27,7 @@
 		"express-rate-limit": "^8.7.0",
 		"ioredis": "^5.11.1",
 		"jsonwebtoken": "^9.0.2",
-		"msedge-tts": "^2.1.0",
+		"msedge-tts": "^2.1.1",
 		"multer": "^2.1.1",
 		"openai": "^6.43.0",
 		"razorpay": "^2.9.6",

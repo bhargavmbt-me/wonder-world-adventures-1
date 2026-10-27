@@ -28,9 +28,10 @@ const VOICE_MAP = {
 	"Telugu":     "te-IN-ShrutiNeural",
 	"Bengali":    "bn-IN-TanishaaNeural",
 	"Malayalam":  "ml-IN-SobhanaNeural",
-	"Punjabi":    "pa-IN-GurpreetNeural",
-	"Odia":       "or-IN-SubhasiniNeural",
-	"Assamese":   "as-IN-PriyomNeural",
+	"Punjabi":    "pa-google",
+	"Odia":       "bn-IN-TanishaaNeural",
+	"Assamese":   "bn-IN-TanishaaNeural",
+	"Sanskrit":   "hi-IN-SwaraNeural",
 	"French":     "fr-FR-DeniseNeural",
 	"Spanish":    "es-ES-ElviraNeural",
 	"Portuguese": "pt-BR-FranciscaNeural",
@@ -65,7 +66,26 @@ const pickVoice = (language) => {
 };
 
 /**
- * Generate MP3 audio from text using msedge-tts.
+ * Fallback TTS for languages unsupported by Edge TTS (e.g. Punjabi)
+ */
+const fetchGoogleTts = async (text, langCode = "pa") => {
+	const chunks = text.match(/.{1,150}(\s|$)/g) || [text];
+	const buffers = [];
+	for (const chunk of chunks) {
+		const t = chunk.trim();
+		if (!t) continue;
+		const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(t)}`;
+		const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+		if (!res.ok) throw new Error(`Google TTS status ${res.status}`);
+		const buf = Buffer.from(await res.arrayBuffer());
+		if (buf.length > 0) buffers.push(buf);
+		await new Promise((r) => setTimeout(r, 120));
+	}
+	return buffers.length > 0 ? Buffer.concat(buffers) : null;
+};
+
+/**
+ * Generate MP3 audio from text using msedge-tts (or Google TTS for Punjabi).
  *
  * @param {string} text     — The text to speak
  * @param {string} language — Story language for voice selection
@@ -87,6 +107,19 @@ const generatePageAudio = async (text, language = "English") => {
 
 	const voice = pickVoice(language);
 	logger.info("[tts] Generating audio", { language, voice, textLength: cleanText.length });
+
+	// Use Google TTS for Punjabi
+	if (voice === "pa-google" || language === "Punjabi") {
+		try {
+			const buf = await fetchGoogleTts(cleanText, "pa");
+			if (buf && buf.length > 0) {
+				logger.info("[tts] Audio generated via Google TTS", { language, size: buf.length });
+				return buf;
+			}
+		} catch (err) {
+			logger.warn("[tts] Google TTS failed, falling back to msedge-tts", { error: err.message });
+		}
+	}
 
 	// Split long text into chunks to avoid WebSocket drops on Render
 	// msedge-tts WebSocket disconnects for text > ~500 chars
