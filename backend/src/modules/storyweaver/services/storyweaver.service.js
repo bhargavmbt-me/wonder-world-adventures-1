@@ -363,7 +363,7 @@ const listDbAudioStories = async (params = {}) => {
 					where,
 					skip: (page - 1) * limit,
 					take: limit,
-					orderBy: [{ readsCount: "desc" }, { createdAt: "desc" }],
+					orderBy: [{ hasAudio: "desc" }, { readsCount: "desc" }, { createdAt: "desc" }],
 				}),
 				prisma.storyWeaverAudio.count({ where }),
 			]);
@@ -386,6 +386,7 @@ const listDbAudioStories = async (params = {}) => {
 				readsCount:  r.readsCount || 0,
 				likesCount:  r.likesCount || 0,
 				isAudio:     true,
+				hasAudio:    Boolean(r.hasAudio),
 				isGif:       false,
 				totalPages:  r.totalPages,
 				isSavedInDb: true,
@@ -872,6 +873,7 @@ const ensurePageAudios = async (storyOrId) => {
 						where: { swId },
 						data: {
 							pages: updatedPages,
+							hasAudio: true,
 							updatedAt: new Date(),
 						},
 					});

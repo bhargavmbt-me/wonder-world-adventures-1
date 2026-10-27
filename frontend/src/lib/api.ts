@@ -329,6 +329,7 @@ export type StoryWeaverStory = {
   readsCount: number;
   likesCount: number;
   isAudio: boolean;
+  hasAudio?: boolean;
   isGif: boolean;
   awards?: string[];
   raw?: Record<string, unknown>;
