@@ -48,6 +48,7 @@ const NAV_ITEMS = [
   { path: "/admin/ai-prompts", label: "AI Prompt Limits", icon: Sparkles },
   { path: "/admin/life-skills", label: "Life Skills", icon: MessageSquare },
   { path: "/admin/stories", label: "Stories", icon: BookOpen },
+  { path: "/admin/storyweaver", label: "StoryWeaver Stories", icon: Sparkles, badge: "Audio" },
   { path: "/admin/languages", label: "Languages", icon: Languages },
   { path: "/admin/lessons", label: "Lessons", icon: GraduationCap },
   { path: "/admin/media", label: "Media Library", icon: Image },

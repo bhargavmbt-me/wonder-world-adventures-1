@@ -123,14 +123,19 @@ export const StoryWeaverSection = () => {
     setLoading(true);
     setError(null);
 
+    const hasQuery = Boolean(query && query.trim());
+    // Global/Universal search: when query is present, search across ALL languages and categories
+    const effectiveLanguage = hasQuery ? "Any language" : language;
+    const effectiveCategoryInput = hasQuery ? "Any category" : category;
+
     // Map level if Category is Level 1..4
     let level: number | undefined;
     let effectiveCategory: string | undefined;
 
-    if (category.startsWith("Level ")) {
-      level = Number(category.replace("Level ", ""));
-    } else if (category !== "Any category") {
-      effectiveCategory = category;
+    if (effectiveCategoryInput.startsWith("Level ")) {
+      level = Number(effectiveCategoryInput.replace("Level ", ""));
+    } else if (effectiveCategoryInput !== "Any category") {
+      effectiveCategory = effectiveCategoryInput;
     }
 
     try {
@@ -138,11 +143,11 @@ export const StoryWeaverSection = () => {
         page,
         limit,
         query:     query.trim() || undefined,
-        language:  language !== "Any language" ? language : undefined,
-        level,
+        language:  effectiveLanguage !== "Any language" ? effectiveLanguage : undefined,
+        level:     hasQuery ? undefined : level,
         category:  effectiveCategory,
         source:    source === "database" ? "database" : undefined,
-        audioOnly: (activeTab === "Audio" && (!language || language === "Any language")) || source === "database",
+        audioOnly: !hasQuery && ((activeTab === "Audio" && (!language || language === "Any language")) || source === "database"),
       });
 
       setStories(res.stories);
@@ -182,23 +187,28 @@ export const StoryWeaverSection = () => {
     }
   };
 
-  // Handle Search submit
+  // Handle Search submit - Universal search across all languages and categories
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const pg = Math.max(1, parseInt(pageInput, 10) || 1);
     const sz = Math.min(50, Math.max(1, parseInt(fetchSizeInput, 10) || 24));
-    fetchStories(pg, sz, searchInput, languageInput, categoryInput, sourceMode);
+    const hasQuery = searchInput.trim().length > 0;
+    fetchStories(pg, sz, searchInput, hasQuery ? "Any language" : languageInput, hasQuery ? "Any category" : categoryInput, sourceMode);
   };
 
   // Filter stories client-side based on activeTab, prioritizing generated audios at the top
   const filteredStories = useMemo(() => {
     let pool = stories;
-    if (activeTab === "Audio") {
-      pool = stories.filter((s) => s.isAudio || s.hasAudio);
-    } else if (activeTab === "GIF") {
-      pool = stories.filter((s) => s.isGif);
-    } else if (activeTab === "Images") {
-      pool = stories.filter((s) => Boolean(s.coverImage));
+    const hasQuery = Boolean(searchInput && searchInput.trim());
+    // Only restrict by media tab if not actively searching
+    if (!hasQuery) {
+      if (activeTab === "Audio") {
+        pool = stories.filter((s) => s.isAudio || s.hasAudio);
+      } else if (activeTab === "GIF") {
+        pool = stories.filter((s) => s.isGif);
+      } else if (activeTab === "Images") {
+        pool = stories.filter((s) => Boolean(s.coverImage));
+      }
     }
     // Stories with generated audios always float to the top
     return [...pool].sort((a, b) => {
@@ -206,7 +216,7 @@ export const StoryWeaverSection = () => {
       const bAudio = b.hasAudio ? 1 : 0;
       return bAudio - aAudio;
     });
-  }, [stories, activeTab]);
+  }, [stories, activeTab, searchInput]);
 
   // Start reels feed
   const handleStartReels = () => {
@@ -217,14 +227,20 @@ export const StoryWeaverSection = () => {
     }
   };
 
-  // Next story in reels feed
+  // Next story in reels feed / reader (ensures advancing to a different story)
   const handleNextReelsStory = () => {
     if (!activeReaderStory) return;
     const pool = filteredStories.length > 0 ? filteredStories : stories;
-    const idx = pool.findIndex((s) => s.id === activeReaderStory.id);
-    if (idx !== -1 && idx + 1 < pool.length) {
-      setActiveReaderStory(pool[idx + 1]);
-    } else if (pool.length > 0) {
+    if (pool.length <= 1) return;
+    const currentId = String(activeReaderStory.id);
+    const idx = pool.findIndex((s) => String(s.id) === currentId);
+    if (idx !== -1) {
+      const nextIdx = (idx + 1) % pool.length;
+      const nextStory = pool[nextIdx];
+      if (String(nextStory.id) !== currentId) {
+        setActiveReaderStory(nextStory);
+      }
+    } else if (pool.length > 0 && String(pool[0].id) !== currentId) {
       setActiveReaderStory(pool[0]);
     }
   };

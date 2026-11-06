@@ -341,20 +341,27 @@ const listDbAudioStories = async (params = {}) => {
 	const { data, source } = await cache.cachedDedup(
 		cacheKey,
 		async () => {
-			const { page = 1, limit = 12, language, level, query } = params;
+			const { page = 1, limit = 12, language, level, query, includeHidden } = params;
 			const where = { isAudio: true };
 
-			if (language && language !== "Any language") {
+			if (!includeHidden) {
+				where.isHidden = false;
+			}
+
+			const isSearch = Boolean(query && String(query).trim());
+			if (!isSearch && language && language !== "Any language") {
 				where.language = { equals: language, mode: "insensitive" };
 			}
-			if (level) {
+			if (!isSearch && level) {
 				where.level = String(level);
 			}
-			if (query) {
+			if (isSearch) {
+				const trimmedQuery = String(query).trim();
 				where.OR = [
-					{ title: { contains: query, mode: "insensitive" } },
-					{ description: { contains: query, mode: "insensitive" } },
-					{ slug: { contains: query, mode: "insensitive" } },
+					{ title: { contains: trimmedQuery, mode: "insensitive" } },
+					{ description: { contains: trimmedQuery, mode: "insensitive" } },
+					{ synopsis: { contains: trimmedQuery, mode: "insensitive" } },
+					{ slug: { contains: trimmedQuery, mode: "insensitive" } },
 				];
 			}
 
@@ -420,8 +427,9 @@ const getDbAudioStats = async () => {
 
 	const fetchStats = async () => {
 		// Sequential execution ensures the initial connection handshakes properly on serverless Postgres
-		const total = await prisma.storyWeaverAudio.count();
+		const total = await prisma.storyWeaverAudio.count({ where: { isHidden: false } });
 		const languageGroups = await prisma.storyWeaverAudio.groupBy({
+			where: { isHidden: false },
 			by: ["language"],
 			_count: { id: true },
 			orderBy: { _count: { id: "desc" } },
@@ -593,16 +601,18 @@ const listStories = async (params = {}) => {
 		try { return JSON.parse(cached); } catch { /* fall through */ }
 	}
 
-	// Build StoryWeaver URL
+	const isSearch = Boolean(query && String(query).trim());
+
+	// Build StoryWeaver URL - universal search when query is provided
 	const qs = new URLSearchParams({
 		page:     String(page),
 		per_page: String(limit),
 	});
-	if (language && language !== "Any language") qs.set("languages[]", language);
-	if (level)    qs.set("reading_level", String(level));
-	if (query)    qs.set("query",         query);
-	if (category && category !== "Any category") qs.set("category", category);
-	if (audioOnly && (!language || language === "Any language")) {
+	if (!isSearch && language && language !== "Any language") qs.set("languages[]", language);
+	if (!isSearch && level)    qs.set("reading_level", String(level));
+	if (isSearch)             qs.set("query",         String(query).trim());
+	if (!isSearch && category && category !== "Any category") qs.set("category", category);
+	if (!isSearch && audioOnly && (!language || language === "Any language")) {
 		qs.set("story_type", "audio");
 	}
 
@@ -614,8 +624,22 @@ const listStories = async (params = {}) => {
 	let books = Array.isArray(raw?.data) ? raw.data.map(normalizeBook) : [];
 
 	// StoryWeaver's reading_level param is a soft hint — post-filter for accuracy
-	if (level) {
+	if (!isSearch && level) {
 		books = books.filter((b) => b.level === String(level));
+	}
+
+	// Filter out any stories that have been explicitly hidden in PostgreSQL
+	try {
+		const hiddenRecords = await prisma.storyWeaverAudio.findMany({
+			where: { isHidden: true },
+			select: { swId: true, slug: true },
+		});
+		if (hiddenRecords.length > 0) {
+			const hiddenSet = new Set(hiddenRecords.flatMap((r) => [String(r.swId), String(r.slug)]));
+			books = books.filter((b) => !hiddenSet.has(String(b.id)) && !hiddenSet.has(String(b.slug)));
+		}
+	} catch (e) {
+		// Non-blocking fallback
 	}
 
 	const meta   = raw?.metadata || {};
@@ -905,6 +929,251 @@ const ensurePageAudios = async (storyOrId) => {
 	return genPromise;
 };
 
+// ─── Admin CMS Methods ───────────────────────────────────────────────────────
+
+/**
+ * List stories in PostgreSQL specifically for Admin with full filtering
+ * (audio status, visibility, language, search, sorting).
+ */
+const listAdminStories = async (params = {}) => {
+	const {
+		page = 1,
+		limit = 20,
+		language,
+		level,
+		query,
+		audioStatus = "all", // "all" | "audio_only" | "no_audio"
+		visibility = "all",  // "all" | "visible" | "hidden"
+		sortBy = "reads",    // "reads" | "newest" | "title" | "audio"
+	} = params;
+
+	const where = {};
+
+	if (language && language !== "Any language" && language !== "all") {
+		where.language = { equals: language, mode: "insensitive" };
+	}
+	if (level && level !== "all") {
+		where.level = String(level);
+	}
+	if (query && String(query).trim()) {
+		const q = String(query).trim();
+		where.OR = [
+			{ title: { contains: q, mode: "insensitive" } },
+			{ description: { contains: q, mode: "insensitive" } },
+			{ slug: { contains: q, mode: "insensitive" } },
+			{ swId: { contains: q, mode: "insensitive" } },
+		];
+	}
+
+	if (audioStatus === "audio_only") {
+		where.hasAudio = true;
+	} else if (audioStatus === "no_audio") {
+		where.hasAudio = false;
+	}
+
+	if (visibility === "visible") {
+		where.isHidden = false;
+	} else if (visibility === "hidden") {
+		where.isHidden = true;
+	}
+
+	let orderBy = [{ readsCount: "desc" }, { createdAt: "desc" }];
+	if (sortBy === "newest") {
+		orderBy = [{ createdAt: "desc" }];
+	} else if (sortBy === "title") {
+		orderBy = [{ title: "asc" }];
+	} else if (sortBy === "audio") {
+		orderBy = [{ hasAudio: "desc" }, { readsCount: "desc" }];
+	}
+
+	const pageNum = Math.max(1, Number(page) || 1);
+	const take = Math.max(1, Number(limit) || 20);
+	const skip = (pageNum - 1) * take;
+
+	const [records, total] = await Promise.all([
+		prisma.storyWeaverAudio.findMany({
+			where,
+			skip,
+			take,
+			orderBy,
+		}),
+		prisma.storyWeaverAudio.count({ where }),
+	]);
+
+	const stories = records.map((r) => ({
+		id:          r.swId,
+		swId:        r.swId,
+		title:       r.title,
+		language:    r.language,
+		level:       r.level || "",
+		slug:        r.slug,
+		coverImage:  r.coverImage,
+		authors:     r.authors || [],
+		illustrators:r.illustrators || [],
+		description: r.description || "",
+		synopsis:    r.synopsis || "",
+		publisher:   r.publisher || "",
+		readsCount:  r.readsCount || 0,
+		likesCount:  r.likesCount || 0,
+		isAudio:     true,
+		hasAudio:    Boolean(r.hasAudio),
+		isHidden:    Boolean(r.isHidden),
+		totalPages:  r.totalPages,
+		orientation: r.orientation || "landscape",
+		pages:       r.pages || [],
+		createdAt:   r.createdAt,
+		updatedAt:   r.updatedAt,
+	}));
+
+	return {
+		stories,
+		total,
+		page: pageNum,
+		totalPages: Math.ceil(total / take) || 1,
+		perPage: take,
+	};
+};
+
+/**
+ * Get comprehensive admin statistics for StoryWeaver stories.
+ */
+const getAdminStoryStats = async () => {
+	const [
+		total,
+		withAudio,
+		withoutAudio,
+		hidden,
+		visible,
+		hiddenWithoutAudio,
+		languageGroups,
+	] = await Promise.all([
+		prisma.storyWeaverAudio.count(),
+		prisma.storyWeaverAudio.count({ where: { hasAudio: true } }),
+		prisma.storyWeaverAudio.count({ where: { hasAudio: false } }),
+		prisma.storyWeaverAudio.count({ where: { isHidden: true } }),
+		prisma.storyWeaverAudio.count({ where: { isHidden: false } }),
+		prisma.storyWeaverAudio.count({ where: { hasAudio: false, isHidden: true } }),
+		prisma.storyWeaverAudio.groupBy({
+			by: ["language"],
+			_count: { id: true },
+			orderBy: { _count: { id: "desc" } },
+		}),
+	]);
+
+	return {
+		total,
+		withAudio,
+		withoutAudio,
+		hidden,
+		visible,
+		hiddenWithoutAudio,
+		languages: languageGroups.map((g) => ({
+			language: g.language,
+			count: g._count.id,
+		})),
+	};
+};
+
+/**
+ * Update single story hidden status.
+ */
+const setStoryHidden = async (idOrSwId, isHidden) => {
+	const str = String(idOrSwId).trim();
+	const numericId = str.split("-")[0];
+
+	const existing = await prisma.storyWeaverAudio.findFirst({
+		where: {
+			OR: [
+				{ swId: str },
+				{ slug: str },
+				{ swId: numericId },
+				{ id: str },
+			],
+		},
+		select: { id: true, swId: true, title: true, isHidden: true },
+	});
+
+	if (!existing) {
+		const err = new Error("Story not found");
+		err.status = 404;
+		throw err;
+	}
+
+	const updated = await prisma.storyWeaverAudio.update({
+		where: { id: existing.id },
+		data: { isHidden: Boolean(isHidden), updatedAt: new Date() },
+	});
+
+	// Invalidate cache immediately
+	await cache.invalidate("storyweaver").catch(() => {});
+	const cacheKey = `storyweaver:${CACHE_VERSION}:story:${existing.swId}`;
+	await redis.del(cacheKey).catch(() => {});
+
+	logger.info("[storyweaver] Toggled story hidden status", {
+		swId: existing.swId,
+		title: existing.title,
+		isHidden: Boolean(isHidden),
+	});
+
+	return updated;
+};
+
+/**
+ * Bulk set hidden status for StoryWeaver stories.
+ */
+const bulkSetHidden = async (action, storyIds = []) => {
+	let result;
+	let message = "";
+
+	if (action === "hide_non_audio") {
+		// HIDE ALL NON-AUDIO STORIES
+		result = await prisma.storyWeaverAudio.updateMany({
+			where: { hasAudio: false },
+			data: { isHidden: true, updatedAt: new Date() },
+		});
+		message = `Successfully hid ${result.count} stories without audio.`;
+	} else if (action === "unhide_non_audio") {
+		result = await prisma.storyWeaverAudio.updateMany({
+			where: { hasAudio: false },
+			data: { isHidden: false, updatedAt: new Date() },
+		});
+		message = `Successfully unhid ${result.count} stories without audio.`;
+	} else if (action === "hide_all") {
+		result = await prisma.storyWeaverAudio.updateMany({
+			data: { isHidden: true, updatedAt: new Date() },
+		});
+		message = `Successfully hid all ${result.count} stories.`;
+	} else if (action === "unhide_all") {
+		result = await prisma.storyWeaverAudio.updateMany({
+			data: { isHidden: false, updatedAt: new Date() },
+		});
+		message = `Successfully made all ${result.count} stories visible.`;
+	} else if (action === "hide_selected" && Array.isArray(storyIds) && storyIds.length > 0) {
+		result = await prisma.storyWeaverAudio.updateMany({
+			where: { swId: { in: storyIds.map(String) } },
+			data: { isHidden: true, updatedAt: new Date() },
+		});
+		message = `Successfully hid ${result.count} selected stories.`;
+	} else if (action === "unhide_selected" && Array.isArray(storyIds) && storyIds.length > 0) {
+		result = await prisma.storyWeaverAudio.updateMany({
+			where: { swId: { in: storyIds.map(String) } },
+			data: { isHidden: false, updatedAt: new Date() },
+		});
+		message = `Successfully unhid ${result.count} selected stories.`;
+	} else {
+		throw new Error("Invalid bulk action or empty story selection");
+	}
+
+	await cache.invalidate("storyweaver").catch(() => {});
+	logger.info("[storyweaver] Bulk hidden action executed", { action, count: result.count });
+
+	return {
+		action,
+		count: result.count,
+		message,
+	};
+};
+
 module.exports = {
 	listStories,
 	getStory,
@@ -916,4 +1185,9 @@ module.exports = {
 	syncStories,
 	// kept for backwards-compat with any existing callers
 	syncAudios: syncStories,
+	// Admin CMS methods
+	listAdminStories,
+	getAdminStoryStats,
+	setStoryHidden,
+	bulkSetHidden,
 };

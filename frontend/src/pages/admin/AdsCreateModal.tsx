@@ -1130,16 +1130,6 @@ export default function AdsCreateModal({ editAd, onClose, onSuccess }: AdsCreate
                         </div>
                       )}
 
-                      {/* Sponsored / Ad Badge */}
-                      <span style={{
-                        position: "absolute", top: 8, left: 8,
-                        background: "rgba(0,0,0,0.6)", color: "white",
-                        fontSize: 9, fontWeight: 700, padding: "2px 6px",
-                        borderRadius: 6, textTransform: "uppercase", letterSpacing: 0.5,
-                      }}>
-                        Promoted
-                      </span>
-
                       {/* Close button simulation for popup / fullscreen */}
                       {(format === "POPUP" || format === "FULLSCREEN" || format === "BOTTOM_SHEET") && (
                         <div style={{

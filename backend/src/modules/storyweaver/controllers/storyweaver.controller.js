@@ -86,6 +86,45 @@ const generateAudio = catchAsync(async (req, res) => {
 	}
 });
 
+// ── Admin Endpoints ──────────────────────────────────────────────────────────
+
+// GET /api/admin/storyweaver/stories
+const adminListStories = catchAsync(async (req, res) => {
+	const { page, limit, language, level, query, audioStatus, visibility, sortBy } = req.query;
+	const result = await service.listAdminStories({
+		page:        page ? Number(page) : 1,
+		limit:       limit ? Number(limit) : 20,
+		language:    language || undefined,
+		level:       level ? Number(level) : undefined,
+		query:       query || undefined,
+		audioStatus: audioStatus || "all",
+		visibility:  visibility || "all",
+		sortBy:      sortBy || "reads",
+	});
+	res.json({ success: true, ...result });
+});
+
+// GET /api/admin/storyweaver/stats
+const adminGetStats = catchAsync(async (req, res) => {
+	const stats = await service.getAdminStoryStats();
+	res.json({ success: true, stats });
+});
+
+// PATCH /api/admin/storyweaver/stories/:id/hide
+const adminToggleHide = catchAsync(async (req, res) => {
+	const { id } = req.params;
+	const { isHidden } = req.body || {};
+	const updated = await service.setStoryHidden(id, isHidden);
+	res.json({ success: true, story: updated });
+});
+
+// POST /api/admin/storyweaver/bulk
+const adminBulkHide = catchAsync(async (req, res) => {
+	const { action, storyIds } = req.body || {};
+	const result = await service.bulkSetHidden(action, storyIds);
+	res.json({ success: true, ...result });
+});
+
 module.exports = {
 	listStories,
 	listDbStories,
@@ -93,4 +132,9 @@ module.exports = {
 	triggerSync,
 	getStory,
 	generateAudio,
+	// Admin CMS
+	adminListStories,
+	adminGetStats,
+	adminToggleHide,
+	adminBulkHide,
 };

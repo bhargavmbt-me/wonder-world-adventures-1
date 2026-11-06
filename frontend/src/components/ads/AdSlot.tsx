@@ -346,17 +346,8 @@ export default function AdSlot({ slot, fallbackSlot, device, className, style }:
     );
   };
 
-  // ── Ad label (child-safe, clearly marks ads) ──────────────────────────────
-  const AdLabel = () => (
-    <span style={{
-      position: "absolute", top: 8, left: 10, fontSize: 10, fontWeight: 700,
-      color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.5)",
-      padding: "2px 8px", borderRadius: 6, letterSpacing: 1, zIndex: 5,
-      textTransform: "uppercase", backdropFilter: "blur(4px)",
-    }}>
-      Ad
-    </span>
-  );
+  // ── Ad label (hidden as requested) ──────────────────────────────────────────
+  const AdLabel = () => null;
 
   // ── Close button (for popup/fullscreen/bottom-sheet) ──────────────────────
   const CloseButton = ({ onClose }: { onClose: (e: React.MouseEvent) => void }) => (

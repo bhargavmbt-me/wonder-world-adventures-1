@@ -633,7 +633,107 @@ export const adminApi = {
   previewAiPrompt: async (data: Partial<AiPromptSettings>, token: string | null) => {
     return adminFetch<{ success: boolean; previewPrompt: string }>("/admin/ai-prompt-settings/preview", { method: "POST", body: JSON.stringify(data) }, token);
   },
+
+  // StoryWeaver Management
+  getStoryWeaverStories: async (params: StoryWeaverListParams, token: string | null) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    if (params.language && params.language !== "all") qs.set("language", params.language);
+    if (params.level && params.level !== "all") qs.set("level", params.level);
+    if (params.query) qs.set("query", params.query);
+    if (params.audioStatus) qs.set("audioStatus", params.audioStatus);
+    if (params.visibility) qs.set("visibility", params.visibility);
+    if (params.sortBy) qs.set("sortBy", params.sortBy);
+
+    return adminFetch<{
+      success: boolean;
+      stories: StoryWeaverAdminStory[];
+      total: number;
+      page: number;
+      totalPages: number;
+      perPage: number;
+    }>(`/admin/storyweaver/stories?${qs.toString()}`, {}, token);
+  },
+
+  getStoryWeaverStats: async (token: string | null) => {
+    return adminFetch<{ success: boolean; stats: StoryWeaverAdminStats }>("/admin/storyweaver/stats", {}, token);
+  },
+
+  toggleStoryWeaverHide: async (id: string, isHidden: boolean, token: string | null) => {
+    return adminFetch<{ success: boolean; story: StoryWeaverAdminStory }>(
+      `/admin/storyweaver/stories/${id}/hide`,
+      { method: "PATCH", body: JSON.stringify({ isHidden }) },
+      token
+    );
+  },
+
+  bulkStoryWeaverHide: async (
+    action: "hide_non_audio" | "unhide_non_audio" | "hide_all" | "unhide_all" | "hide_selected" | "unhide_selected",
+    storyIds: string[] = [],
+    token: string | null
+  ) => {
+    return adminFetch<{ success: boolean; action: string; count: number; message: string }>(
+      "/admin/storyweaver/bulk",
+      { method: "POST", body: JSON.stringify({ action, storyIds }) },
+      token
+    );
+  },
+
+  generateStoryWeaverAudio: async (id: string, token: string | null) => {
+    return adminFetch<{ success: boolean; story: any }>(
+      `/admin/storyweaver/stories/${id}/generate-audio`,
+      { method: "POST" },
+      token
+    );
+  },
 };
+
+export interface StoryWeaverAdminStory {
+  id: string;
+  swId: string;
+  title: string;
+  language: string;
+  level: string;
+  slug: string;
+  coverImage?: string | null;
+  authors: string[];
+  illustrators: string[];
+  description: string;
+  synopsis: string;
+  publisher: string;
+  readsCount: number;
+  likesCount: number;
+  isAudio: boolean;
+  hasAudio: boolean;
+  isHidden: boolean;
+  totalPages: number;
+  orientation?: string;
+  pages?: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StoryWeaverAdminStats {
+  total: number;
+  withAudio: number;
+  withoutAudio: number;
+  hidden: number;
+  visible: number;
+  hiddenWithoutAudio: number;
+  languages: Array<{ language: string; count: number }>;
+}
+
+export interface StoryWeaverListParams {
+  page?: number;
+  limit?: number;
+  language?: string;
+  level?: string;
+  query?: string;
+  audioStatus?: "all" | "audio_only" | "no_audio";
+  visibility?: "all" | "visible" | "hidden";
+  sortBy?: "reads" | "newest" | "title" | "audio";
+}
 
 export interface AiPromptSettings {
   id?: string;

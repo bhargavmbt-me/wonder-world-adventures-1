@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -689,6 +690,15 @@ export default function StoriesAdmin() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Link to="/admin/storyweaver">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-violet-200 bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold gap-1.5 shadow-sm"
+              >
+                <Sparkles className="w-4 h-4 text-violet-600" /> StoryWeaver Stories
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
