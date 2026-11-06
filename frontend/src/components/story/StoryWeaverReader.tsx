@@ -357,10 +357,10 @@ export const StoryWeaverReader = ({
             <button
               type="button"
               id="sw-reader-skip"
-              onClick={goNext}
-              disabled={isLast && !onNextStory}
+              onClick={onNextStory || goNext}
+              disabled={!onNextStory && isLast}
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition flex items-center justify-center text-white disabled:opacity-30 disabled:pointer-events-none"
-              title="Next page / skip"
+              title="Next story"
             >
               <SkipForward className="w-4 h-4" />
             </button>

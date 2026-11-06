@@ -103,4 +103,12 @@ router.post("/life-skills", adminCreate);
 router.put("/life-skills/:id", adminUpdate);
 router.delete("/life-skills/:id", adminDelete);
 
+// ── StoryWeaver Management ───────────────────────────────────────
+const storyweaverController = require("../storyweaver/controllers/storyweaver.controller");
+router.get("/storyweaver/stories", storyweaverController.adminListStories);
+router.get("/storyweaver/stats", storyweaverController.adminGetStats);
+router.patch("/storyweaver/stories/:id/hide", storyweaverController.adminToggleHide);
+router.post("/storyweaver/bulk", storyweaverController.adminBulkHide);
+router.post("/storyweaver/stories/:id/generate-audio", storyweaverController.generateAudio);
+
 module.exports = router;

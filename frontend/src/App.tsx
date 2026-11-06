@@ -24,6 +24,7 @@ import BottomNav from "./components/BottomNav";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StoriesAdmin from "./pages/admin/StoriesAdmin";
+import StoryWeaverAdmin from "./pages/admin/StoryWeaverAdmin";
 import LanguagesAdmin from "./pages/admin/LanguagesAdmin";
 import LessonsAdmin from "./pages/admin/LessonsAdmin";
 import UsersAdmin from "./pages/admin/UsersAdmin";
@@ -134,6 +135,7 @@ const AppRoutes = () => {
         <Route path="/admin/ai-models" element={<AdminRoute><AiModelsAdmin /></AdminRoute>} />
         <Route path="/admin/ai-prompts" element={<AdminRoute><AiPromptsAdmin /></AdminRoute>} />
         <Route path="/admin/stories" element={<AdminRoute><StoriesAdmin /></AdminRoute>} />
+        <Route path="/admin/storyweaver" element={<AdminRoute><StoryWeaverAdmin /></AdminRoute>} />
         <Route path="/admin/languages" element={<AdminRoute><LanguagesAdmin /></AdminRoute>} />
         <Route path="/admin/lessons" element={<AdminRoute><LessonsAdmin /></AdminRoute>} />
         <Route path="/admin/lessons/create" element={<AdminRoute><LessonBuilderPage /></AdminRoute>} />
